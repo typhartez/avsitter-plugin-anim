@@ -24,17 +24,17 @@ default {
             list lines = llParseString2List(osGetNotecard(BTCONFIG), ["\n"], []);
             integer i;
             string str;
-            string anim;
             integer sitter;
             integer c = llGetListLength(lines);
             for (i = 0; i < c; ++i) {
                 str = llList2String(lines, i);
                 if (llSubStringIndex(str, "#") && "" != str && !llSubStringIndex(str, "Animation = ")) {
                     list l = llParseString2List(llGetSubString(str, 12, -1), ["|"], []);
-                    str = llStringTrim(llList2String(l, 0), STRING_TRIM);
-                    sitter = (integer)llStringTrim(llList2String(l, 1), STRING_TRIM);
-                    anim = llStringTrim(llList2String(l, 2), STRING_TRIM);
-                    AVanim += [ sitter, str, anim ];
+                    AVanim += [
+                        (integer)llStringTrim(llList2String(l, 1), STRING_TRIM),
+                        llStringTrim(llList2String(l, 0), STRING_TRIM),
+                        osReplaceString(llStringTrim(llList2String(l, 2), STRING_TRIM), " ?\\, ?", ";", -1, 0)
+                    ];
                 }
             }
             // build by sitter#
