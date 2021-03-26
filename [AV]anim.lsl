@@ -86,19 +86,19 @@ list animsForSeat(integer sitter, string pose) {
     return lst;
 }
 
-stopAnimations(integer sitter) {
+stopAnimations(integer sitter, key id) {
     integer i = llListFindList(playing, [sitter]);
     if (~i) {
         list played = llParseString2List(llList2String(playing, i+1), [";"], []);
         integer c = llGetListLength(played);
-        while (~(--c)) llStopAnimation(llList2String(played, c));
+        while (~(--c)) llMessageLinked(LINK_THIS, 90002, llList2String(played ,c), id);
         playing = llDeleteSubList(playing, i, i+1);
     }
 }
 
-startAnimations(integer sitter, list lst) {
+startAnimations(integer sitter, key id, list lst) {
     integer i = llGetListLength(lst);
-    while (~(--i)) llStartAnimation(llList2String(lst, i));
+    while (~(--i)) llMessageLinked(LINK_THIS, 90001, llList2String(lst, i), id);
     playing += [sitter, llDumpList2String(lst, ";")];
 }
 
@@ -122,17 +122,19 @@ default {
     link_message(integer sender, integer num, string str, key id) {
         if (90060 == num) {
             // avatar sits: id=agent UUID, str=SITTER #
-            llRequestPermissions(id, PERMISSION_TRIGGER_ANIMATION);
+            //llOwnerSay(">> " + llKey2Name(id) + " sitting on #"+str);
         }
         else if (90065 == num) {
             // avatar stands: id=agent UUID, str=SITTER #
-            stopAnimations((integer)str);
+            //llOwnerSay(">> " + llKey2Name(id) + " standing from #"+str);
+            stopAnimations((integer)str, id);
         }
         else if (90045 == num) {
             // pose is played: id=agent UUID, str=SITTER #|pose name|...
             list data = llParseStringKeepNulls(str, ["|"], []);
             integer sitter = (integer)llList2String(data, 0);
             string pose = llList2String(data, 1);
+            //llOwnerSay(">> Playing "+pose+" for " + llKey2Name(id) + " on #"+(string)sitter);
 
             data = animsForSeat(sitter, pose);
             if ([] == data) {
@@ -141,11 +143,11 @@ default {
             }
             if (llDumpList2String(data, "") != llDumpList2String(animsForSeat(sitter, EOF), "")) {
                 // first stop currently played animations
-                stopAnimations(sitter);
+                stopAnimations(sitter, id);
             }
             if ([] != data) {
                 // found specific animations for this pose
-                startAnimations(sitter, data);
+                startAnimations(sitter, id, data);
             }
         }
     }
